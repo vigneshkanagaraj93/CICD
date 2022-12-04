@@ -7,6 +7,13 @@ resource "aws_instance" "myec2" {
   security_groups = [aws_security_group.myec2.id]
   }
 
+#create default VPC
+resource "aws_default_vpc" "default" {
+  tags = {
+    Name = "Default VPC"
+  }
+}
+
 #create security group
 
 resource "aws_security_group" "myec2" {
@@ -45,4 +52,15 @@ ingress {
     cidr_blocks      = ["0.0.0.0/0"]
     
   }
+}
+
+#store the terraform state file in s3
+
+terraform{
+backend "s3" {
+ bucket		= "terraform-state-cicd-bucket"
+ key		= "build/terraform.tfstate
+ region		= "us-east-1"
+ profile	= "terraformtest"
+}
 }
