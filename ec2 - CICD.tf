@@ -3,15 +3,28 @@
 resource "aws_instance" "myec2" {
   ami = "ami-0b0dcb5067f052a63"
   instance_type = "t2.micro"
+  count = "1"
+  subnet_id = aws_subnet.myec2.id
   key_name ="terraformtest"
   security_groups = [aws_security_group.myec2.id]
   }
 
-#create default VPC
-resource "aws_default_vpc" "default" {
-  tags = {
-    Name = "Default VPC"
+#create VPC
+
+ resource "aws_vpc" "myec2vpc" {
+  cidr_block = "10.10.0.0/16"
   }
+ 
+#create subnet
+
+ resource "aws_subnet" "publicsubnet" {
+  vpc_id     = aws_vpc.myec2vpc.id
+  cidr_block = "10.10.1.0/24"
+}
+
+resource "aws_subnet" "privatesubnet" {
+  vpc_id     = aws_vpc.myec2vpc.id
+  cidr_block = "10.10.2.0/24"
 }
 
 #create security group
@@ -54,13 +67,20 @@ ingress {
   }
 }
 
-#store the terraform state file in s3
+#create volume
 
-terraform{
-backend "s3" {
- bucket		= "terraform-state-cicd-bucket"
- key		= "build/terraform.tfstate
- region		= "us-east-1"
- profile	= "terraformtest"
+resource "aws_ebs_volume" "myec2" {
+  availability_zone = "us-east-1"
+  size              = 10
+
 }
+
+#create s3_bucket
+
+resource "aws_s3_bucket" "myec2" {
+  bucket = "myec2bucket"
+
+  versioning {
+    enabled = true
+  }
 }
